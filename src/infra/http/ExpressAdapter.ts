@@ -1,5 +1,4 @@
 import express, { type Request, type Response, type NextFunction, type RequestHandler } from 'express'
-// import { errorHandlerMiddleware } from '../middlewares/ErrorHandlerMiddleware'
 import { type IHttpServer } from './IHttpServer'
 import cors from 'cors'
 
@@ -24,10 +23,20 @@ export default class ExpressAdapter implements IHttpServer {
   }
 
   listen (port: number): void {
-    // this.app.use(errorHandlerMiddleware)
     this.app.listen(port)
-    console.info('Listen: ', port)
+    console.info('');
+    console.info('================= Environment ==================');
+    console.info(`LEG8: connected to http and firebase: "${port}"`);
+    console.info('================================================');
   }
+
+  use (
+    path: string | RequestHandler,
+    ...handlers: RequestHandler[]
+  ): void {
+    this.app.use(path, ...handlers);
+  }
+
 
   close (): void {
     const server = this.app.listen()

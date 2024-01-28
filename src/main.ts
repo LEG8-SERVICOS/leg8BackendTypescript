@@ -1,38 +1,26 @@
-// index.ts
-import express from 'express';
-import { FirebaseAdapter } from './infra/firebase/FirebaseAdapter';
-import { AuthenticateUserInteractor } from './application/usecases/AuthenticateUserUseCase';
-import { HttpController } from './infra/controllers/HttpController';
-import { RegisterAttestationInteractor } from './application/usecases/RegisterAttestationUseCase';
-import { ListUsersInteractor } from './application/usecases/ListUsersUseCase';
-import { FirebaseUserRepository } from './application/repository/UserRepository';
-import { CreateRecordUseCase } from './application/usecases/CreateRecordUseCase';
 import setupRoutes from './infra/controllers/Routes';
+import ExpressAdapter from './infra/http/ExpressAdapter';
 
-const app = express();
-app.use(express.json());
+export class App {
+  private readonly expressServer: ExpressAdapter
 
-// adapter
-const firebaseAdapter = new FirebaseAdapter();
-// interactors
-const authenticateUserInteractor = new AuthenticateUserInteractor(firebaseAdapter);
-const registerAttestationInteractor = new RegisterAttestationInteractor(firebaseAdapter);
-const createRecordInterator = new CreateRecordUseCase(firebaseAdapter);
-const listUsersInteractor = new ListUsersInteractor(firebaseAdapter);
-//repo
-const userRepository = new FirebaseUserRepository(firebaseAdapter);
-// controller
-const httpController = new HttpController(
-                            authenticateUserInteractor, 
-                            registerAttestationInteractor,
-                            createRecordInterator,
-                            listUsersInteractor,
-                            userRepository
-                            );
+  constructor() {
+    this.expressServer = new ExpressAdapter();
+  }
 
-// Setup routes
-app.use('/', setupRoutes(httpController));
+  async start() {
+    const router = setupRoutes();
+    this.expressServer.listen(80);
+    this.expressServer.use(router);
+  }
 
-app.listen(3000, () => {
-  console.log('Servidor rodando na porta 3000');
+  async stop() {
+    this.expressServer.close();
+  }
+  
+}
+const app = new App();
+
+app.start().catch((error) => {
+  console.error({'Um ou mais serviços não foram iniciados corretamente': error});
 });
