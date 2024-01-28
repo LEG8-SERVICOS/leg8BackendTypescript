@@ -3,7 +3,9 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "dev": "ts-node-dev --transpile-only --ignore-watch node_modules src/main.ts"
+    "dev": "ts-node-dev --transpile-only --ignore-watch node_modules src/main.ts",
+    "build": "npx tsc",
+    "start": "node src/main.js"
   },
   "license": "MIT",
   "dependencies": {
