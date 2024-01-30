@@ -41,6 +41,6 @@ COPY --from=build /src/tsconfig.json ./tsconfig.json
 
 RUN yarn global add pm2
 
-EXPOSE 80 443
+EXPOSE 8080 443
 
 CMD yarn start
