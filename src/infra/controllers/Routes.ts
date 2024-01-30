@@ -1,3 +1,5 @@
+import fs from 'fs/promises';
+import path from 'path';
 import express from 'express';
 import { HttpController } from './HttpController';
 import { FirebaseAdapter } from '../firebase/FirebaseAdapter';
@@ -28,6 +30,18 @@ export default function setupRoutes() {
   router.post('/attestation', (req, res) => httpController.createAttestation(req, res));
   router.get('/users', (req, res) => httpController.listUsers(req, res));
   router.post('/record', (req, res) => httpController.createRecord(req, res));
+  router.get('/work-statistics', (req, res) => httpController.getWorkStatistics(req, res));
+  
+  //inicial view
+  router.get('/', async (req, res) => {
+    const filePath = path.join(__dirname, '../../View', 'index.html');
+    const htmlTemplate = await fs.readFile(filePath, 'utf8');
+    const message: string = 'PROD' ?? 'PROD';
 
-  return router;
+    const renderedHtml = htmlTemplate.replace('{{message}}', message).replace('{{message}}', message);
+
+    res.writeHead(200, { 'Content-Type': 'text/html' });
+    res.end(renderedHtml);
+  })
+  return router
 }

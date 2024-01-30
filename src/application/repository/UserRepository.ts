@@ -3,6 +3,7 @@ import firebase from 'firebase/compat/app';
 
 export interface UserRepository {
   getUserByUid(userUid: string): Promise<firebase.database.DataSnapshot>;
+  getAllUsers(): Promise<any[]>;
 }
 
 export class FirebaseUserRepository implements UserRepository {
@@ -13,8 +14,33 @@ export class FirebaseUserRepository implements UserRepository {
     return usersSnapshot;
   }
 
+  async getAllUsers(): Promise<any[]> {
+    const usersSnapshot = await this.firebaseAdapter.getRef('users').get();
+    if (usersSnapshot.exists()) {
+      const users: any[] = [];
+      usersSnapshot.forEach((userSnapshot) => {
+        const userData = userSnapshot.val();
+        const userUid = userSnapshot.key;
+        const recordSnapshot = userSnapshot.child('record'); // Obtém o snapshot do campo 'record'
+        const recordData = recordSnapshot.exists() ? recordSnapshot.val() : null; // Verifica se o campo 'record' existe e obtém seus dados
+  
+        users.push({
+          uid: userUid,
+          data: {
+            ...userData,
+            record: recordData 
+          }
+        });
+      });
+      return users;
+    } else {
+      return [];
+    }
+  }
+  
+
   async createUser(user: any): Promise<string> {
     const path = 'users'; 
     return this.firebaseAdapter.postValue(path, user);
   } 
-} 
+}

@@ -10,7 +10,7 @@ export class App {
 
   async start() {
     const router = setupRoutes();
-    this.expressServer.listen(80);
+    this.expressServer.listen(8080);
     this.expressServer.use(router);
   }
 

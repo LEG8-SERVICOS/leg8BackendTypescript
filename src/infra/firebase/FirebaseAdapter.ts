@@ -12,7 +12,7 @@ export interface IFirebase {
   postValue(path: string, value: any): Promise<string>;
   updateValue(path: string, value: any): Promise<void>;
   deleteValue(path: string): Promise<void>;
-  getRef(path: string): firebase.database.Reference; // Adicionando o método getRef
+  getRef(path: string): firebase.database.Reference; 
   // getAllUsers
   getAllUsers(): Promise<any[]>;
 }
