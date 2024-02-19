@@ -8,6 +8,8 @@ import { RegisterAttestationInteractor } from '../../application/usecases/Regist
 import { ListUsersInteractor } from '../../application/usecases/ListUsersUseCase';
 import { CreateRecordUseCase } from '../../application/usecases/CreateRecordUseCase';
 import { FirebaseUserRepository } from '../../application/repository/UserRepository';
+import { FirebaseAttestationRepository } from '../../application/repository/AttestationRepository';
+import calcularEstatisticasDeTrabalho from '../../application/usecases/estatistics/getWorkStatistics';
 
 const router = express.Router();
 
@@ -16,6 +18,7 @@ export default function setupRoutes() {
   const authenticateUserInteractor = new AuthenticateUserInteractor(firebaseAdapter);
   const registerAttestationInteractor = new RegisterAttestationInteractor(firebaseAdapter);
   const createRecordInterator = new CreateRecordUseCase(firebaseAdapter);
+  const attestationRepository = new FirebaseAttestationRepository(firebaseAdapter);
   const listUsersInteractor = new ListUsersInteractor(firebaseAdapter);
   const userRepository = new FirebaseUserRepository(firebaseAdapter);
   const httpController = new HttpController(
@@ -23,15 +26,27 @@ export default function setupRoutes() {
     registerAttestationInteractor,
     createRecordInterator,
     listUsersInteractor,
-    userRepository
+    userRepository,
+    attestationRepository
   );
 
   router.post('/login', (req, res) => httpController.login(req, res));
   router.post('/attestation', (req, res) => httpController.createAttestation(req, res));
-  router.get('/users', (req, res) => httpController.listUsers(req, res));
   router.post('/record', (req, res) => httpController.createRecord(req, res));
-  router.get('/work-statistics', (req, res) => httpController.getWorkStatistics(req, res));
-  
+  // getters
+  router.get('/attestations', (req, res) => httpController.getAttestations(req, res));
+  router.get('/users', (req, res) => httpController.listUsers(req, res));
+  router.get('/records', (req, res) => httpController.getRecords(req, res));
+
+  router.get('/work-statistics', async (req, res) => {
+    try {
+        const data = await calcularEstatisticasDeTrabalho();
+        res.json(data);
+    } catch (error) {
+      console.log(error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
   //inicial view
   router.get('/', async (req, res) => {
     const filePath = path.join(__dirname, '../../View', 'index.html');

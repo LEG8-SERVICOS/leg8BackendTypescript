@@ -1,72 +1,100 @@
-import { Request, Response } from 'express';
-import { FirebaseAdapter } from '../../../infra/firebase/FirebaseAdapter';
-import { FirebaseUserRepository } from '../../repository/UserRepository';
+import axios, { AxiosResponse } from 'axios';
+import { DateTime } from 'luxon';
 
-export class HttpController {
-  constructor(
-    readonly firebaseAdapter: FirebaseAdapter,
-    readonly userRepository: FirebaseUserRepository
-  ) {}
+interface WorkRecord {
+    [key: string]: string;
+}
 
-  async getWorkStatistics(req: Request, res: Response): Promise<void> {
-    try {
-      const users = await this.userRepository.getAllUsers();
-      const currentDate = new Date();
-      const currentMonth = currentDate.getMonth() + 1;
-      const productivityData: Record<string, any> = {};
+interface WorkStatistics {
+    totalHorasTrabalhadas: { [operador: string]: number };
+    produtividadeMediaDiaria: number;
+    produtividadeDiaAnterior: number;
+    apontamentoFaltanteMes: number;
+    totalHorasTrabalhadasMes: number;
+}
 
-      for (const user of users) {
-        const { uid, data: userData } = user;
-        const userRecords = userData.record;
-        const individualIndex: Record<string, any> = {};
+export default async function calcularEstatisticasDeTrabalho(): Promise<WorkStatistics> {
+    const responseUsers: AxiosResponse<any[]> = await axios.get("http://localhost:8080/users");
+    const responseRecords: AxiosResponse<WorkRecord[]> = await axios.get("http://localhost:8080/records");
+    
+    const usuarios: any[] = responseUsers.data;
+    const registros: WorkRecord[] = responseRecords.data;
+    const totalUsuarios: number = usuarios.length;
 
-        let totalHoursWorked = 0;
-        let totalProductivity = 0;
+    let totalHorasTrabalhadas: { [operador: string]: number } = {};
+    let totalHorasTrabalhadasMes: number = 0;
+    let totalProdutividadeDiaria: number = 0;
+    let totalProdutividadeDiariaOntem: number = 0;
+    let totalApontamentoFaltante: number = 0;
 
-        for (const record of userRecords) {
-          const recordDate = new Date(record.data);
-          const recordMonth = recordDate.getMonth() + 1;
-          if (recordMonth === currentMonth) {
-            for (let i = 1; i <= 4; i++) {
-              const startTime = this.parseTime(record[`horario_inicio_${i}`]);
-              const endTime = this.parseTime(record[`horario_fim_${i}`]);
-              if (startTime && endTime) {
-                const hoursWorked = (endTime - startTime) / (1000 * 60 * 60);
-                totalHoursWorked += hoursWorked;
+    const hoje = DateTime.local();
+    const mes = hoje.month;
+    const ontem = hoje.minus({ days: 1 });
 
-                const productivity = (hoursWorked / 8) * 100; // Produtividade baseada em 8 horas diárias
-                totalProductivity += productivity;
+    registros.forEach(registro => {
+        for (let i = 1; i <= totalUsuarios; i++) {
+            const horaInicio: string | undefined = registro[`horario_inicio_${i}`];
+            const horaFim: string | undefined = registro[`horario_fim_${i}`];
 
-                individualIndex[`record_${i}`] = {
-                  startTime: record[`horario_inicio_${i}`],
-                  endTime: record[`horario_fim_${i}`],
-                  productivity: productivity.toFixed(2) // Arredonda para duas casas decimais
-                };
-              }
+            if (horaInicio && horaFim) {
+                const dataRegistro = DateTime.fromISO(registro.data); 
+
+                if (dataRegistro.hasSame(hoje, 'day')) {
+                    const diferencaHoras: number = calcularDiferencaHoras(horaInicio, horaFim);
+                    totalHorasTrabalhadasMes += diferencaHoras;
+
+                    const operador: string | undefined = registro[`operador_${i}`];
+
+                    if (operador) {
+                        if (!totalHorasTrabalhadas[operador]) {
+                            totalHorasTrabalhadas[operador] = 0;
+                        }
+                        totalHorasTrabalhadas[operador] += diferencaHoras;
+                    }
+                }
             }
-          }
         }
+    });
 
-        const averageProductivity = (totalProductivity / totalHoursWorked) * 8; // Produtividade média por dia baseada em 8 horas
+    const horasPorDia = 8 * totalUsuarios; 
+    const horasPorMes = 176;
+    totalProdutividadeDiaria = (totalHorasTrabalhadasMes / horasPorDia) * 100;
+    totalApontamentoFaltante = (totalHorasTrabalhadasMes / horasPorMes);
 
-        productivityData[uid] = {
-          email: userData.email,
-          totalHoursWorked: totalHoursWorked.toFixed(2), // Arredonda para duas casas decimais
-          averageProductivity: averageProductivity.toFixed(2), // Arredonda para duas casas decimais
-          individualIndex
-        };
-      }
+    const registrosOntem = registros.filter(registro => {
+        const dataRegistro = DateTime.fromISO(registro.data); 
+        return dataRegistro.hasSame(ontem, 'day');
+    });
 
-      res.status(200).json(productivityData);
-    } catch (error) {
-      console.error('Erro ao obter estatísticas de trabalho:', error);
-      res.status(500).json({ error: 'Erro ao obter estatísticas de trabalho.' });
-    }
-  }
+    const totalHorasTrabalhadasOntem = registrosOntem.reduce((total, registro) => {
+        let totalHoras = 0;
+        for (let i = 1; i <= totalUsuarios; i++) {
+            const horaInicio: string | undefined = registro[`horario_inicio_${i}`];
+            const horaFim: string | undefined = registro[`horario_fim_${i}`];
+            if (horaInicio && horaFim) {
+                totalHoras += calcularDiferencaHoras(horaInicio, horaFim);
+            }
+        }
+        return total + totalHoras;
+    }, 0);
 
-  parseTime(timeString: string): number | null {
-    const [hours, minutes] = timeString.split(':').map(Number);
-    if (isNaN(hours) || isNaN(minutes)) return null;
-    return hours * 60 * 60 * 1000 + minutes * 60 * 1000;
-  }
+    totalProdutividadeDiariaOntem = (totalHorasTrabalhadasOntem / horasPorDia) * 100;
+
+
+    const horasTrabalhadasEsperadasMes = 20 * horasPorDia;
+    totalApontamentoFaltante = (horasTrabalhadasEsperadasMes - totalHorasTrabalhadasMes) / mes;
+
+    return {
+        totalHorasTrabalhadas,
+        produtividadeMediaDiaria: totalProdutividadeDiaria,
+        produtividadeDiaAnterior: totalProdutividadeDiariaOntem,
+        apontamentoFaltanteMes: totalApontamentoFaltante,
+        totalHorasTrabalhadasMes
+    };
+}
+
+function calcularDiferencaHoras(horaInicio: string, horaFim: string): number {
+    const inicio = DateTime.fromFormat(horaInicio, 'HH:mm');
+    const fim = DateTime.fromFormat(horaFim, 'HH:mm');
+    return fim.diff(inicio, 'hours').hours;
 }

@@ -1,9 +1,12 @@
+import { v4 as uuidv4 } from 'uuid';
 import { Request, Response } from 'express';
 import { AuthenticateUserUseCase, AuthenticatedUser } from '../../application/usecases/AuthenticateUserUseCase';
 import { RegisterAttestationUseCase } from '../../application/usecases/RegisterAttestationUseCase';
 import { ListUsersUseCase } from '../../application/usecases/ListUsersUseCase';
 import { FirebaseUserRepository } from '../../application/repository/UserRepository';
 import { CreateRecordUseCase } from '../../application/usecases/CreateRecordUseCase';
+import { FirebaseAttestationRepository } from '../../application/repository/AttestationRepository';
+import WorkStatistics from '../../application/usecases/estatistics/getWorkStatistics';
 
 export class HttpController {
    constructor(
@@ -11,7 +14,8 @@ export class HttpController {
     readonly registerAttestationUseCase: RegisterAttestationUseCase,
     readonly createRecordUseCase: CreateRecordUseCase,
     readonly listUsersUseCase: ListUsersUseCase,
-    readonly userRepository: FirebaseUserRepository
+    readonly userRepository: FirebaseUserRepository,
+    readonly attestationRepository: FirebaseAttestationRepository,
   ) {}
 
   async login(req: Request, res: Response): Promise<void> {
@@ -36,15 +40,35 @@ export class HttpController {
     }
   }
 
+  async getAttestations(req: Request, res: Response): Promise<void> {
+    try {
+      const attestation = await this.attestationRepository.getAllAttestation()
+      res.status(200).json(attestation);
+    } catch (error) {
+      console.error('Erro ao listar atestados:', error);
+      res.status(500).json({ message: 'Erro ao listar atestados' });
+    }
+  }
+
   async createAttestation(req: Request, res: Response): Promise<void> {
     const { userId, hoursStopped, date, observations } = req.body;
 
     try {
-      await this.registerAttestationUseCase.execute({ userId, hoursStopped, date, observations });
+      await this.registerAttestationUseCase.execute(req.body);
       res.status(201).json({ message: 'Atestado criado com sucesso' });
     } catch (error) {
       console.error('Erro ao criar atestado:', error);
       res.status(500).json({ error: 'Erro ao criar atestado' });
+    }
+  }
+
+  async getRecords(req: Request, res: Response): Promise<void> {
+    try {
+      const records = await this.createRecordUseCase.getAllRecords();
+      res.status(200).json(records);
+    } catch (error) {
+      console.error('Erro ao listar registros:', error);
+      res.status(500).json({ message: 'Erro ao listar registros' });
     }
   }
 
@@ -68,58 +92,54 @@ export class HttpController {
     }
   }
 
+
   async getWorkStatistics(req: Request, res: Response): Promise<void> {
     try {
-      const users = await this.userRepository.getAllUsers();
+      const allRecords = await this.createRecordUseCase.getAllRecords();
       const currentDate = new Date();
       const currentMonth = currentDate.getMonth() + 1;
       const productivityData: Record<string, any> = {};
   
-      for (const user of users) {
-        const { uid, data: userData } = user;
-        const userRecords = userData.record;
-  
-        // Verifica se userRecords é null e define como um array vazio se for
-        const recordsArray = Array.isArray(userRecords) ? userRecords : [];
-  
-        const individualIndex: Record<string, any> = {};
-  
-        let totalHoursWorked = 0;
-        let totalProductivity = 0;
-  
-        for (const record of recordsArray) {
-          const recordDate = new Date(record.data);
-          const recordMonth = recordDate.getMonth() + 1;
-          if (recordMonth === currentMonth) {
-            for (let i = 1; i <= 4; i++) {
-              const startTime = this.parseTime(record[`horario_inicio_${i}`]);
-              const endTime = this.parseTime(record[`horario_fim_${i}`]);
-              if (startTime && endTime) {
-                const hoursWorked = (endTime - startTime) / (1000 * 60 * 60);
-                totalHoursWorked += hoursWorked;
-  
-                const productivity = (hoursWorked / 8) * 100; // Produtividade baseada em 8 horas diárias
-                totalProductivity += productivity;
-  
-                individualIndex[`record_${i}`] = {
-                  startTime: record[`horario_inicio_${i}`],
-                  endTime: record[`horario_fim_${i}`],
-                  productivity: productivity.toFixed(2) // Arredonda para duas casas decimais
-                };
-              }
+      for (const record of allRecords) {
+        const recordDate = new Date(record.data);
+        const recordMonth = recordDate.getMonth() + 1;
+        console.log(recordMonth, currentMonth, recordDate, currentDate, record)
+        if (recordMonth === currentMonth) {
+          const userId = record.operador_1;
+          const startTime = this.parseTime(record.horario_inicio_1); 
+          const endTime = this.parseTime(record.horario_fim_1); 
+          
+          if (startTime && endTime) {
+            const hoursWorked = (endTime - startTime) / (1000 * 60 * 60);
+            const productivity = (record.aprovados / record.quantidade_total) * 100; 
+            if (!productivityData[userId]) {
+              productivityData[userId] = {
+                email: record.operador_1, 
+                totalHoursWorked: 0,
+                totalProductivity: 0,
+                individualIndex: {}
+              };
             }
+  
+            productivityData[userId].totalHoursWorked += hoursWorked;
+            productivityData[userId].totalProductivity += productivity;
+  
+            const indexKey = uuidv4(); 
+            productivityData[userId].individualIndex[indexKey] = {
+              startTime: record.horario_inicio_1,
+              endTime: record.horario_fim_1,
+              productivity: productivity.toFixed(2) 
+            };
           }
         }
+      }
   
-        // Calcula a produtividade média apenas se houver horas trabalhadas no mês
-        const averageProductivity = totalHoursWorked !== 0 ? (totalProductivity / totalHoursWorked) * 8 : 0;
-  
-        productivityData[uid] = {
-          email: userData.email,
-          totalHoursWorked: totalHoursWorked.toFixed(2), // Arredonda para duas casas decimais
-          averageProductivity: isNaN(averageProductivity) ? 0 : averageProductivity.toFixed(2), // Verifica se a média é NaN e define como 0
-          individualIndex
-        };
+      for (const userId in productivityData) {
+        const { totalHoursWorked, totalProductivity, individualIndex } = productivityData[userId];
+        const averageProductivity = totalHoursWorked !== 0 ? (totalProductivity / totalHoursWorked) : 0;
+        
+        productivityData[userId].totalHoursWorked = totalHoursWorked.toFixed(2);
+        productivityData[userId].averageProductivity = isNaN(averageProductivity) ? 0 : averageProductivity.toFixed(2);
       }
   
       res.status(200).json(productivityData);
@@ -128,7 +148,6 @@ export class HttpController {
       res.status(500).json({ error: 'Erro ao obter estatísticas de trabalho.' });
     }
   }
-  
   
 
   parseTime(timeString: string): number | null {

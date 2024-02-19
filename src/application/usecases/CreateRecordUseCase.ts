@@ -42,4 +42,21 @@ export class CreateRecordUseCase {
       throw new Error('Erro ao criar registro.');
     }
   }
+  async getAllRecords(): Promise<any[]> {
+    const recordsSnapshot = await this.firebaseAdapter.getRef('records').get();
+    const allRecords: any[] = [];
+
+    if (recordsSnapshot.exists()) {
+      recordsSnapshot.forEach((recordSnapshot) => {
+        const recordData = recordSnapshot.val();
+        allRecords.push(recordData);
+      });
+    }
+    return allRecords;
+  }
+
+  async updateRecord(userId: string, updatedRecord: any): Promise<void> {
+    const path = `records/${userId}`; 
+    await this.firebaseAdapter.updateValue(path, updatedRecord);
+  }
 }
