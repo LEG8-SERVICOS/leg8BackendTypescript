@@ -6,7 +6,6 @@ interface WorkRecord {
 }
 
 interface WorkStatistics {
-    totalHorasTrabalhadas: { [operador: string]: number };
     produtividadeMediaDiaria: number;
     produtividadeDiaAnterior: number;
     apontamentoFaltanteMes: number;
@@ -21,73 +20,82 @@ export default async function calcularEstatisticasDeTrabalho(): Promise<WorkStat
     const registros: WorkRecord[] = responseRecords.data;
     const totalUsuarios: number = usuarios.length;
 
-    let totalHorasTrabalhadas: { [operador: string]: number } = {};
     let totalHorasTrabalhadasMes: number = 0;
-    let totalProdutividadeDiaria: number = 0;
-    let totalProdutividadeDiariaOntem: number = 0;
-    let totalApontamentoFaltante: number = 0;
 
     const hoje = DateTime.local();
     const mes = hoje.month;
-    const ontem = hoje.minus({ days: 1 });
+    const horasPorDia = 8 * totalUsuarios; 
+    const horasPorMes = 176 * totalUsuarios;
 
-    registros.forEach(registro => {
+    // Filtrar registros do mês atual
+    const registrosMes = registros.filter(registro => {
+        const dataRegistro = DateTime.fromISO(registro.data);
+        return dataRegistro.month === hoje.month;
+    });
+
+    // Calcular total de horas trabalhadas no mês
+    registrosMes.forEach(registro => {
         for (let i = 1; i <= totalUsuarios; i++) {
             const horaInicio: string | undefined = registro[`horario_inicio_${i}`];
             const horaFim: string | undefined = registro[`horario_fim_${i}`];
 
             if (horaInicio && horaFim) {
-                const dataRegistro = DateTime.fromISO(registro.data); 
-
-                if (dataRegistro.hasSame(hoje, 'day')) {
-                    const diferencaHoras: number = calcularDiferencaHoras(horaInicio, horaFim);
-                    totalHorasTrabalhadasMes += diferencaHoras;
-
-                    const operador: string | undefined = registro[`operador_${i}`];
-
-                    if (operador) {
-                        if (!totalHorasTrabalhadas[operador]) {
-                            totalHorasTrabalhadas[operador] = 0;
-                        }
-                        totalHorasTrabalhadas[operador] += diferencaHoras;
-                    }
-                }
+                const diferencaHoras: number = calcularDiferencaHoras(horaInicio, horaFim);
+                totalHorasTrabalhadasMes += diferencaHoras;
             }
         }
     });
 
-    const horasPorDia = 8 * totalUsuarios; 
-    const horasPorMes = 176;
-    totalProdutividadeDiaria = (totalHorasTrabalhadasMes / horasPorDia) * 100;
-    totalApontamentoFaltante = (totalHorasTrabalhadasMes / horasPorMes);
+    // Filtrar registros do dia atual
+    const registrosHoje = registros.filter(registro => {
+        const dataRegistro = DateTime.fromISO(registro.data);
+        return dataRegistro.hasSame(hoje, 'day');
+    });
 
+    // Calcular total de horas trabalhadas hoje
+    let totalHorasTrabalhadasHoje: number = 0;
+    registrosHoje.forEach(registro => {
+        for (let i = 1; i <= totalUsuarios; i++) {
+            const horaInicio: string | undefined = registro[`horario_inicio_${i}`];
+            const horaFim: string | undefined = registro[`horario_fim_${i}`];
+
+            if (horaInicio && horaFim) {
+                const diferencaHoras: number = calcularDiferencaHoras(horaInicio, horaFim);
+                totalHorasTrabalhadasHoje += diferencaHoras;
+            }
+        }
+    });
+
+    const totalProdutividadeDiaria = (totalHorasTrabalhadasHoje / horasPorDia) * 100;
+
+    // Filtrar registros do dia anterior
+    const ontem = hoje.minus({ days: 1 });
     const registrosOntem = registros.filter(registro => {
-        const dataRegistro = DateTime.fromISO(registro.data); 
+        const dataRegistro = DateTime.fromISO(registro.data);
         return dataRegistro.hasSame(ontem, 'day');
     });
 
-    const totalHorasTrabalhadasOntem = registrosOntem.reduce((total, registro) => {
-        let totalHoras = 0;
+    // Calcular total de horas trabalhadas ontem
+    let totalHorasTrabalhadasOntem: number = 0;
+    registrosOntem.forEach(registro => {
         for (let i = 1; i <= totalUsuarios; i++) {
             const horaInicio: string | undefined = registro[`horario_inicio_${i}`];
             const horaFim: string | undefined = registro[`horario_fim_${i}`];
+
             if (horaInicio && horaFim) {
-                totalHoras += calcularDiferencaHoras(horaInicio, horaFim);
+                const diferencaHoras: number = calcularDiferencaHoras(horaInicio, horaFim);
+                totalHorasTrabalhadasOntem += diferencaHoras;
             }
         }
-        return total + totalHoras;
-    }, 0);
+    });
 
-    totalProdutividadeDiariaOntem = (totalHorasTrabalhadasOntem / horasPorDia) * 100;
+    const totalProdutividadeDiariaOntem = (totalHorasTrabalhadasOntem / horasPorDia) * 100;
 
-
-    const horasTrabalhadasEsperadasMes = 20 * horasPorDia;
-    totalApontamentoFaltante = (horasTrabalhadasEsperadasMes - totalHorasTrabalhadasMes) / mes;
+    const totalApontamentoFaltante = (horasPorMes - totalHorasTrabalhadasMes) / mes;
 
     return {
-        totalHorasTrabalhadas,
-        produtividadeMediaDiaria: totalProdutividadeDiaria,
-        produtividadeDiaAnterior: totalProdutividadeDiariaOntem,
+        produtividadeMediaDiaria: parseFloat(totalProdutividadeDiaria.toFixed(2)),
+        produtividadeDiaAnterior: parseFloat(totalProdutividadeDiariaOntem.toFixed(2)),
         apontamentoFaltanteMes: totalApontamentoFaltante,
         totalHorasTrabalhadasMes
     };

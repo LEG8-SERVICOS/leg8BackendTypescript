@@ -21,9 +21,8 @@ export class FirebaseUserRepository implements UserRepository {
       usersSnapshot.forEach((userSnapshot) => {
         const userData = userSnapshot.val();
         const userUid = userSnapshot.key;
-        const recordSnapshot = userSnapshot.child('record'); // Obtém o snapshot do campo 'record'
-        const recordData = recordSnapshot.exists() ? recordSnapshot.val() : null; // Verifica se o campo 'record' existe e obtém seus dados
-  
+        const recordSnapshot = userSnapshot.child('record'); 
+        const recordData = recordSnapshot.exists() ? recordSnapshot.val() : null; 
         users.push({
           uid: userUid,
           data: {

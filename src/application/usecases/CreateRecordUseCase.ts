@@ -1,4 +1,3 @@
-// CreateRecordUseCase.ts
 import { FirebaseAdapter } from '../../infra/firebase/FirebaseAdapter';
 
 interface RecordData {

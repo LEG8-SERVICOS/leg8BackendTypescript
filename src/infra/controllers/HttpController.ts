@@ -6,7 +6,6 @@ import { ListUsersUseCase } from '../../application/usecases/ListUsersUseCase';
 import { FirebaseUserRepository } from '../../application/repository/UserRepository';
 import { CreateRecordUseCase } from '../../application/usecases/CreateRecordUseCase';
 import { FirebaseAttestationRepository } from '../../application/repository/AttestationRepository';
-import WorkStatistics from '../../application/usecases/estatistics/getWorkStatistics';
 
 export class HttpController {
    constructor(
@@ -24,22 +23,11 @@ export class HttpController {
     try {
       const user: AuthenticatedUser = await this.authenticateUserUseCase.execute(email, password);
       res.status(200).json(user);
-      await this.createOrUpdateUser({userUid: user.uid, email, displayName: user.displayName, photoURL: user.photoURL}); 
     } catch (error) {
       console.error('Erro ao fazer login:', error);
       res.status(400).json({ message: 'Erro ao fazer login' });
     }
   }
-
-  async createOrUpdateUser(userData: any): Promise<void> {
-    try {
-      await this.userRepository.createUser(userData);
-      console.log('Usuário criado ou atualizado com sucesso:', userData);
-    } catch (error) {
-      console.error('Erro ao criar ou atualizar usuário:', error);
-    }
-  }
-
   async getAttestations(req: Request, res: Response): Promise<void> {
     try {
       const attestation = await this.attestationRepository.getAllAttestation()
@@ -89,63 +77,6 @@ export class HttpController {
     } catch (error) {
       console.error('Erro ao criar registro:', error);
       res.status(500).json({ error: 'Erro ao criar registro.' });
-    }
-  }
-
-
-  async getWorkStatistics(req: Request, res: Response): Promise<void> {
-    try {
-      const allRecords = await this.createRecordUseCase.getAllRecords();
-      const currentDate = new Date();
-      const currentMonth = currentDate.getMonth() + 1;
-      const productivityData: Record<string, any> = {};
-  
-      for (const record of allRecords) {
-        const recordDate = new Date(record.data);
-        const recordMonth = recordDate.getMonth() + 1;
-        console.log(recordMonth, currentMonth, recordDate, currentDate, record)
-        if (recordMonth === currentMonth) {
-          const userId = record.operador_1;
-          const startTime = this.parseTime(record.horario_inicio_1); 
-          const endTime = this.parseTime(record.horario_fim_1); 
-          
-          if (startTime && endTime) {
-            const hoursWorked = (endTime - startTime) / (1000 * 60 * 60);
-            const productivity = (record.aprovados / record.quantidade_total) * 100; 
-            if (!productivityData[userId]) {
-              productivityData[userId] = {
-                email: record.operador_1, 
-                totalHoursWorked: 0,
-                totalProductivity: 0,
-                individualIndex: {}
-              };
-            }
-  
-            productivityData[userId].totalHoursWorked += hoursWorked;
-            productivityData[userId].totalProductivity += productivity;
-  
-            const indexKey = uuidv4(); 
-            productivityData[userId].individualIndex[indexKey] = {
-              startTime: record.horario_inicio_1,
-              endTime: record.horario_fim_1,
-              productivity: productivity.toFixed(2) 
-            };
-          }
-        }
-      }
-  
-      for (const userId in productivityData) {
-        const { totalHoursWorked, totalProductivity, individualIndex } = productivityData[userId];
-        const averageProductivity = totalHoursWorked !== 0 ? (totalProductivity / totalHoursWorked) : 0;
-        
-        productivityData[userId].totalHoursWorked = totalHoursWorked.toFixed(2);
-        productivityData[userId].averageProductivity = isNaN(averageProductivity) ? 0 : averageProductivity.toFixed(2);
-      }
-  
-      res.status(200).json(productivityData);
-    } catch (error) {
-      console.error('Erro ao obter estatísticas de trabalho:', error);
-      res.status(500).json({ error: 'Erro ao obter estatísticas de trabalho.' });
     }
   }
   
