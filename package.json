@@ -9,10 +9,6 @@
   },
   "license": "MIT",
   "dependencies": {
-    "@types/cors": "^2.8.17",
-    "@types/firebase": "^3.2.1",
-    "@types/luxon": "^3.4.2",
-    "@types/uuid": "^9.0.8",
     "axios": "^1.6.7",
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
@@ -22,10 +18,14 @@
     "luxon": "^3.4.4",
     "mysql2": "^3.6.5",
     "path": "^0.12.7",
-    "typescript": "^5.3.3",
     "uuid": "^9.0.1"
   },
   "devDependencies": {
+    "typescript": "^5.3.3",
+    "@types/cors": "^2.8.17",
+    "@types/firebase": "^3.2.1",
+    "@types/luxon": "^3.4.2",
+    "@types/uuid": "^9.0.8",
     "@types/dotenv": "^8.2.0",
     "@types/express": "^4.17.21",
     "ts-node-dev": "^2.0.0"
