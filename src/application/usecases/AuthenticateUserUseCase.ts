@@ -22,9 +22,9 @@ export class AuthenticateUserInteractor implements AuthenticateUserUseCase {
     }
 
     return {
-      email: user.email || '',
-      displayName: user.displayName || '',
-      photoURL: user.photoURL || '',
+      email: user.email ?? '',
+      displayName: user.displayName ?? '',
+      photoURL: user.photoURL ?? '',
       uid: user.uid,
     };
   }

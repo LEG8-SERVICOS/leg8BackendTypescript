@@ -96,7 +96,7 @@ export default async function calcularEstatisticasDeTrabalho(): Promise<WorkStat
     return {
         produtividadeMediaDiaria: parseFloat(totalProdutividadeDiaria.toFixed(2)),
         produtividadeDiaAnterior: parseFloat(totalProdutividadeDiariaOntem.toFixed(2)),
-        apontamentoFaltanteMes: totalApontamentoFaltante,
+        apontamentoFaltanteMes: parseFloat(totalApontamentoFaltante.toFixed(2)),
         totalHorasTrabalhadasMes
     };
 }

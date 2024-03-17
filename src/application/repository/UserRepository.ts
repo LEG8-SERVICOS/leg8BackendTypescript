@@ -31,6 +31,7 @@ export class FirebaseUserRepository implements UserRepository {
           }
         });
       });
+      console.log(users);
       return users;
     } else {
       return [];
