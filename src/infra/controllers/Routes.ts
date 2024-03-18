@@ -11,6 +11,7 @@ import { FirebaseUserRepository } from '../../application/repository/UserReposit
 import { FirebaseAttestationRepository } from '../../application/repository/AttestationRepository';
 import calcularEstatisticasDeTrabalho from '../../application/usecases/estatistics/getWorkStatistics';
 import calcularEstatisticasDeTrabalhoPorUser from '../../application/usecases/estatistics/getWorkStatisticsPerUser';
+import calcularEstatisticasPorUsuarioDaily from '../../application/usecases/estatistics/getDailyStatistics';
 
 const router = express.Router();
 
@@ -48,6 +49,17 @@ export default function setupRoutes() {
         res.status(500).json({ error: 'Internal server error' });
     }
 });
+
+  router.get('/daily-statistics', async (req, res) => {
+    try {
+        const data = await calcularEstatisticasPorUsuarioDaily();
+        res.json(data);
+    } catch (error) {
+      console.log(error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+  });
+
   router.get('/work-statistics-per-user', async (req, res) => {
     try {
         const data = await calcularEstatisticasDeTrabalhoPorUser();

@@ -67,7 +67,7 @@ export default async function calcularEstatisticasPorUsuario(): Promise<UserWork
             produtividadeDiaAnterior: parseFloat(totalProdutividadeDiariaOntem.toFixed(2)),
             totalHorasTrabalhadasMes,
             totalHorasTrabalhadasHoje,
-            horasFaltantesHoje // Adiciona as horas faltantes à estatística
+            horasFaltantesHoje
         });
     }
 
