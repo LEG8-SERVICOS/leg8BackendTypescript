@@ -3,11 +3,8 @@ import { DateTime } from 'luxon';
 
 interface User {
     uid: string;
-    data: {
-        displayName: string;
-        email: string;
-        userUid: string;
-    };
+    displayName: string;
+    email: string;
 }
 
 interface WorkRecord {
@@ -36,35 +33,35 @@ export default async function calcularEstatisticasPorUsuario(): Promise<UserWork
     const estatisticasPorUsuario: UserWorkStatistics[] = [];
 
     for (const usuario of usuarios) {
-        const { email } = usuario.data;
+        const { uid, email } = usuario;
+        let totalHorasTrabalhadasMes = 0;
+        let totalHorasTrabalhadasHoje = 0;
 
-        const registrosUsuario = registros.filter(registro => registro.criado_por === usuario.data.userUid);
+        for (const registro of registros) {
+            for (let i = 1; i <= 4; i++) {
+                const operadorUid = registro[`operador_${i}`];
+                if (operadorUid === uid) {
+                    const horaInicio = registro[`horario_inicio_${i}`];
+                    const horaFim = registro[`horario_fim_${i}`];
+                    if (horaInicio && horaFim) {
+                        const horasTrabalhadas = calcularDiferencaHoras(horaInicio, horaFim);
+                        if (DateTime.fromISO(registro.data).hasSame(hoje, 'day')) {
+                            totalHorasTrabalhadasHoje += horasTrabalhadas;
+                        }
+                        totalHorasTrabalhadasMes += horasTrabalhadas;
+                    }
+                }
+            }
+        }
 
-        const totalHorasTrabalhadasMes = registrosUsuario.length > 0 ? calcularTotalHorasTrabalhadas(registrosUsuario) : 0;
-
-        const registrosUsuarioHoje = registrosUsuario.filter(registro => {
-            const dataRegistro = DateTime.fromISO(registro.data);
-            return dataRegistro.hasSame(hoje, 'day') && (registro[`horario_inicio_1`] || registro[`horario_inicio_2`] || registro[`horario_inicio_3`] || registro[`horario_inicio_4`]);
-        });
-
-        const totalHorasTrabalhadasHoje = calcularTotalHorasTrabalhadas(registrosUsuarioHoje);
-        
-        const horasFaltantesHoje = 8 - totalHorasTrabalhadasHoje; 
-
-        const registrosUsuarioOntem = registrosUsuario.filter(registro => {
-            const dataRegistro = DateTime.fromISO(registro.data);
-            return dataRegistro.hasSame(ontem, 'day') && (registro[`horario_inicio_1`] || registro[`horario_inicio_2`] || registro[`horario_inicio_3`] || registro[`horario_inicio_4`]);
-        });
-
-        const totalHorasTrabalhadasOntem = calcularTotalHorasTrabalhadas(registrosUsuarioOntem);
-
-        const totalProdutividadeDiaria = (totalHorasTrabalhadasHoje / 8) * 100;
-        const totalProdutividadeDiariaOntem = (totalHorasTrabalhadasOntem / 8) * 100;
+        const horasFaltantesHoje = 8 - totalHorasTrabalhadasHoje;
+        const produtividadeMediaDiaria = totalHorasTrabalhadasHoje / 8 * 100;
+        const produtividadeDiaAnterior = totalHorasTrabalhadasMes / 8 * 100;
 
         estatisticasPorUsuario.push({
             email,
-            produtividadeMediaDiaria: parseFloat(totalProdutividadeDiaria.toFixed(2)),
-            produtividadeDiaAnterior: parseFloat(totalProdutividadeDiariaOntem.toFixed(2)),
+            produtividadeMediaDiaria: parseFloat(produtividadeMediaDiaria.toFixed(2)),
+            produtividadeDiaAnterior: parseFloat(produtividadeDiaAnterior.toFixed(2)),
             totalHorasTrabalhadasMes,
             totalHorasTrabalhadasHoje,
             horasFaltantesHoje
@@ -73,6 +70,7 @@ export default async function calcularEstatisticasPorUsuario(): Promise<UserWork
 
     return estatisticasPorUsuario;
 }
+
 
 function calcularTotalHorasTrabalhadas(registros: WorkRecord[]): number {
     return registros.reduce((total, registro) => {

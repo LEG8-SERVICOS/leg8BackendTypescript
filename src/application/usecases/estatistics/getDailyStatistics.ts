@@ -49,8 +49,10 @@ export default async function calcularEstatisticasPorUsuarioDaily(): Promise<Wor
     for (const usuario of usuarios) {
         const { email } = usuario.data;
 
-        const registrosUsuario = registros.filter(registro => registro.criado_por === usuario.data.userUid);
+        // Filtrando registros do usuário
+        const registrosUsuario = registros.filter(registro => registro.userUid === usuario.data.userUid);
 
+        // Estrutura para armazenar registros por data
         const registrosPorData: { [data: string]: WorkRecord[] } = {};
         registrosUsuario.forEach(registro => {
             const dataRegistro = DateTime.fromISO(registro.data).toFormat('yyyy-MM-dd');

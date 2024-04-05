@@ -39,7 +39,7 @@ export default function setupRoutes() {
   router.get('/attestations', (req, res) => httpController.getAttestations(req, res));
   router.get('/users', (req, res) => httpController.listUsers(req, res));
   router.get('/records', (req, res) => httpController.getRecords(req, res));
-
+  
   router.get('/work-statistics', async (req, res) => {
     try {
         const data = await calcularEstatisticasDeTrabalho();
