@@ -19,7 +19,7 @@ export class ListUsersInteractor implements ListUsersUseCase {
   }
 
   async execute(): Promise<any[]> {
-    return this.firebaseAdapter.getAllUsers();
+    return this.firebaseAdapter.getAllNonAdminUsers();
   }
 
   async userExists(userId: string): Promise<boolean> {

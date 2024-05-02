@@ -27,6 +27,10 @@ interface RecordData {
   horario_fim_2: string | null;
   horario_fim_3: string | null;
   horario_fim_4: string | null;
+  nomeop1: string;
+  nomeop2: string | null;
+  nomeop3: string | null;
+  nomeop4: string | null;
   observacoes: string | null;
 }
 

@@ -12,7 +12,7 @@ interface WorkRecord {
 }
 
 interface UserWorkStatistics {
-    email: string;
+    displayName: string;
     produtividadeMediaDiaria: number;
     produtividadeDiaAnterior: number;
     totalHorasTrabalhadasMes: number;
@@ -21,19 +21,21 @@ interface UserWorkStatistics {
 }
 
 export default async function calcularEstatisticasPorUsuario(): Promise<UserWorkStatistics[]> {
-    const responseUsers = await axios.get<User[]>("http://localhost:8080/users");
-    const responseRecords = await axios.get<WorkRecord[]>("http://localhost:8080/records");
+    const responseUsers = await axios.get("http://localhost:8080/users");
+    const responseRecords = await axios.get("http://localhost:8080/records");
 
-    const usuarios: User[] = responseUsers.data;
+    const usuarios = responseUsers.data;
+
     const registros: WorkRecord[] = responseRecords.data;
 
     const hoje = DateTime.local();
-    const ontem = hoje.minus({ days: 1 });
 
     const estatisticasPorUsuario: UserWorkStatistics[] = [];
 
     for (const usuario of usuarios) {
-        const { uid, email } = usuario;
+        const { uid, data } = usuario;
+        const displayName = data.displayName; // Ajuste para acessar o displayName
+
         let totalHorasTrabalhadasMes = 0;
         let totalHorasTrabalhadasHoje = 0;
 
@@ -59,7 +61,7 @@ export default async function calcularEstatisticasPorUsuario(): Promise<UserWork
         const produtividadeDiaAnterior = totalHorasTrabalhadasMes / 8 * 100;
 
         estatisticasPorUsuario.push({
-            email,
+            displayName,
             produtividadeMediaDiaria: parseFloat(produtividadeMediaDiaria.toFixed(2)),
             produtividadeDiaAnterior: parseFloat(produtividadeDiaAnterior.toFixed(2)),
             totalHorasTrabalhadasMes,
@@ -70,6 +72,7 @@ export default async function calcularEstatisticasPorUsuario(): Promise<UserWork
 
     return estatisticasPorUsuario;
 }
+
 
 
 function calcularTotalHorasTrabalhadas(registros: WorkRecord[]): number {

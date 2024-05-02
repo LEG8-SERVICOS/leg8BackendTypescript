@@ -45,7 +45,6 @@ export default function setupRoutes() {
         const data = await calcularEstatisticasDeTrabalho();
         res.json(data);
     } catch (error) {
-      console.log(error);
         res.status(500).json({ error: 'Internal server error' });
     }
 });
@@ -55,7 +54,6 @@ export default function setupRoutes() {
         const data = await calcularEstatisticasPorUsuarioDaily();
         res.json(data);
     } catch (error) {
-      console.log(error);
         res.status(500).json({ error: 'Internal server error' });
     }
   });
@@ -65,7 +63,6 @@ export default function setupRoutes() {
         const data = await calcularEstatisticasDeTrabalhoPorUser();
         res.json(data);
     } catch (error) {
-      console.log(error);
         res.status(500).json({ error: 'Internal server error' });
     }
   });

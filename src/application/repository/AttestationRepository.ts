@@ -8,7 +8,6 @@ export class FirebaseAttestationRepository implements AttestationRepository {
   constructor(private firebaseAdapter: FirebaseAdapter) {}
 
   async registerAttestation(attestation: any): Promise<string> {
-    console.log(attestation)
     const path = 'attestations'; 
     return this.firebaseAdapter.postValue(path, attestation);
   }

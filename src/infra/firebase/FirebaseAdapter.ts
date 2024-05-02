@@ -87,4 +87,23 @@ export class FirebaseAdapter implements IFirebase {
       return [];
     }
   }
+  async getAllNonAdminUsers(): Promise<any[]> {
+    const usersSnapshot = await this.database.ref('users').get();
+    if (usersSnapshot.exists()) {
+      const nonAdminUsers: any[] = [];
+      usersSnapshot.forEach((userSnapshot) => {
+        const userData = userSnapshot.val();
+        if (!userData.Admin || userData.Admin.toUpperCase() !== 'Y') {
+          nonAdminUsers.push({
+            uid: userSnapshot.key,
+            data: userData
+          });
+        }
+      });
+      return nonAdminUsers;
+    } else {
+      return [];
+    }
+  }
+  
 }
