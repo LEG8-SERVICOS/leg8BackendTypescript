@@ -33,9 +33,9 @@ interface WorkStatistics {
 }
 
 export default async function calcularEstatisticasPorUsuarioDaily(): Promise<WorkStatistics[]> {
-    const responseUsers = await axios.get<User[]>("http://localhost:8080/users");
-    const responseRecords = await axios.get<WorkRecord[]>("http://localhost:8080/records");
-    const responseAttestations = await axios.get<AttestationRecord[]>("http://localhost:8080/attestations");
+    const responseUsers = await axios.get<User[]>("https://api.leg8.com.br/users");
+    const responseRecords = await axios.get<WorkRecord[]>("https://api.leg8.com.br/records");
+    const responseAttestations = await axios.get<AttestationRecord[]>("https://api.leg8.com.br/attestations");
 
     const usuarios: User[] = responseUsers.data;
     const registros: WorkRecord[] = responseRecords.data;
