@@ -6,6 +6,7 @@ export interface UserRepository {
   getAllUsers(): Promise<any[]>;
 }
 
+
 export class FirebaseUserRepository implements UserRepository {
   constructor(private firebaseAdapter: FirebaseAdapter) {}
 
