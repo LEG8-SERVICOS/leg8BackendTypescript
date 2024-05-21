@@ -25,19 +25,19 @@ export default async function calcularEstatisticasPorUsuario(): Promise<UserWork
     const responseRecords = await axios.get("https://api.leg8.com.br/records");
 
     const usuarios = responseUsers.data;
-
     const registros: WorkRecord[] = responseRecords.data;
-
     const hoje = DateTime.local();
+    const ontem = hoje.minus({ days: 1 });
 
     const estatisticasPorUsuario: UserWorkStatistics[] = [];
 
     for (const usuario of usuarios) {
         const { uid, data } = usuario;
-        const displayName = data.displayName; // Ajuste para acessar o displayName
+        const displayName = data.displayName;
 
         let totalHorasTrabalhadasMes = 0;
         let totalHorasTrabalhadasHoje = 0;
+        let totalHorasTrabalhadasOntem = 0;
 
         for (const registro of registros) {
             for (let i = 1; i <= 4; i++) {
@@ -47,10 +47,15 @@ export default async function calcularEstatisticasPorUsuario(): Promise<UserWork
                     const horaFim = registro[`horario_fim_${i}`];
                     if (horaInicio && horaFim) {
                         const horasTrabalhadas = calcularDiferencaHoras(horaInicio, horaFim);
-                        if (DateTime.fromISO(registro.data).hasSame(hoje, 'day')) {
+                        const dataRegistro = DateTime.fromISO(registro.data);
+                        if (dataRegistro.hasSame(hoje, 'day')) {
                             totalHorasTrabalhadasHoje += horasTrabalhadas;
+                        } else if (dataRegistro.hasSame(ontem, 'day')) {
+                            totalHorasTrabalhadasOntem += horasTrabalhadas;
                         }
-                        totalHorasTrabalhadasMes += horasTrabalhadas;
+                        if (dataRegistro.month === hoje.month && dataRegistro.year === hoje.year) {
+                            totalHorasTrabalhadasMes += horasTrabalhadas;
+                        }
                     }
                 }
             }
@@ -58,7 +63,7 @@ export default async function calcularEstatisticasPorUsuario(): Promise<UserWork
 
         const horasFaltantesHoje = 8 - totalHorasTrabalhadasHoje;
         const produtividadeMediaDiaria = totalHorasTrabalhadasHoje / 8 * 100;
-        const produtividadeDiaAnterior = totalHorasTrabalhadasMes / 8 * 100;
+        const produtividadeDiaAnterior = totalHorasTrabalhadasOntem / 8 * 100;
 
         estatisticasPorUsuario.push({
             displayName,
@@ -71,21 +76,6 @@ export default async function calcularEstatisticasPorUsuario(): Promise<UserWork
     }
 
     return estatisticasPorUsuario;
-}
-
-
-
-function calcularTotalHorasTrabalhadas(registros: WorkRecord[]): number {
-    return registros.reduce((total, registro) => {
-        for (let i = 1; i <= 4; i++) {
-            const horaInicio = registro[`horario_inicio_${i}`];
-            const horaFim = registro[`horario_fim_${i}`];
-            if (horaInicio && horaFim) {
-                total += calcularDiferencaHoras(horaInicio, horaFim);
-            }
-        }
-        return total;
-    }, 0);
 }
 
 function calcularDiferencaHoras(horaInicio: string, horaFim: string): number {
