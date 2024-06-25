@@ -19,14 +19,14 @@ export class AuthenticateUserInteractor implements AuthenticateUserUseCase {
     const userCredential = await this.firebaseAdapter.signInWithEmailAndPassword(email, password);
     const user = userCredential.user;
     // ativar apenas na integracao
-    // const userData: AuthenticatedUser = {
-    //   uid: userCredential.user?.email ?? '',
-    //   displayName: userCredential.user?.displayName ?? '',
-    //   photoURL: userCredential.user?.photoURL ?? '',
-    //   email: userCredential.user?.email ?? '',
-    // };
-    // const userRepository = new FirebaseUserRepository(this.firebaseAdapter);
-    // await userRepository.createUser(userData);
+    const userData: AuthenticatedUser = {
+      uid: userCredential.user?.email ?? '',
+      displayName: userCredential.user?.displayName ?? '',
+      photoURL: userCredential.user?.photoURL ?? '',
+      email: userCredential.user?.email ?? '',
+    };
+    const userRepository = new FirebaseUserRepository(this.firebaseAdapter);
+    await userRepository.createUser(userData);
     if (!user) {
       throw new Error('Usuário não encontrado');
     }

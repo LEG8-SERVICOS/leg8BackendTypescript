@@ -1,6 +1,6 @@
 import setupRoutes from './infra/controllers/Routes';
 import ExpressAdapter from './infra/http/ExpressAdapter';
-
+               
 export class App {
   private readonly expressServer: ExpressAdapter
 

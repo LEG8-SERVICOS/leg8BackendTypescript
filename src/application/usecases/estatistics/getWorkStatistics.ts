@@ -15,7 +15,7 @@ interface WorkStatistics {
 export default async function calcularEstatisticasDeTrabalho(): Promise<WorkStatistics> {
     const responseUsers: AxiosResponse<any[]> = await axios.get("https://api.leg8.com.br/users");
     const responseRecords: AxiosResponse<WorkRecord[]> = await axios.get("https://api.leg8.com.br/records");
-    
+
     const usuarios: any[] = responseUsers.data;
     const registros: WorkRecord[] = responseRecords.data;
     const totalUsuarios: number = usuarios.length;
@@ -24,7 +24,7 @@ export default async function calcularEstatisticasDeTrabalho(): Promise<WorkStat
 
     const hoje = DateTime.local();
     const mes = hoje.month;
-    const horasPorDia = 8 * totalUsuarios; 
+    const horasPorDia = 8 * totalUsuarios;
     const horasPorMes = 176 * totalUsuarios;
 
     // Filtrar registros do mês atual
@@ -104,5 +104,11 @@ export default async function calcularEstatisticasDeTrabalho(): Promise<WorkStat
 function calcularDiferencaHoras(horaInicio: string, horaFim: string): number {
     const inicio = DateTime.fromFormat(horaInicio, 'HH:mm');
     const fim = DateTime.fromFormat(horaFim, 'HH:mm');
-    return fim.diff(inicio, 'hours').hours;
+
+    let diferenca = fim.diff(inicio, 'hours').hours;
+    if (diferenca < 0) {
+        diferenca += 24; // Ajuste para períodos noturnos
+    }
+
+    return diferenca;
 }

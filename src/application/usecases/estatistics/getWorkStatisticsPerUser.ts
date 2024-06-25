@@ -62,8 +62,8 @@ export default async function calcularEstatisticasPorUsuario(): Promise<UserWork
         }
 
         const horasFaltantesHoje = 8 - totalHorasTrabalhadasHoje;
-        const produtividadeMediaDiaria = totalHorasTrabalhadasHoje / 8 * 100;
-        const produtividadeDiaAnterior = totalHorasTrabalhadasOntem / 8 * 100;
+        const produtividadeMediaDiaria = (totalHorasTrabalhadasHoje / 8) * 100;
+        const produtividadeDiaAnterior = (totalHorasTrabalhadasOntem / 8) * 100;
 
         estatisticasPorUsuario.push({
             displayName,
@@ -81,5 +81,11 @@ export default async function calcularEstatisticasPorUsuario(): Promise<UserWork
 function calcularDiferencaHoras(horaInicio: string, horaFim: string): number {
     const inicio = DateTime.fromFormat(horaInicio, 'HH:mm');
     const fim = DateTime.fromFormat(horaFim, 'HH:mm');
-    return fim.diff(inicio, 'hours').hours;
+
+    let diferenca = fim.diff(inicio, 'hours').hours;
+    if (diferenca < 0) {
+        diferenca += 24; // Ajuste para períodos noturnos
+    }
+
+    return diferenca;
 }
