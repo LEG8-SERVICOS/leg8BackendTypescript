@@ -21,13 +21,14 @@
     "uuid": "^9.0.1"
   },
   "devDependencies": {
-    "typescript": "^5.3.3",
+    "@firebase/app-types": "^0.9.2",
     "@types/cors": "^2.8.17",
-    "@types/firebase": "^3.2.1",
-    "@types/luxon": "^3.4.2",
-    "@types/uuid": "^9.0.8",
     "@types/dotenv": "^8.2.0",
     "@types/express": "^4.17.21",
-    "ts-node-dev": "^2.0.0"
+    "@types/firebase": "^3.2.3",
+    "@types/luxon": "^3.4.2",
+    "@types/uuid": "^9.0.8",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^5.3.3"
   }
 }

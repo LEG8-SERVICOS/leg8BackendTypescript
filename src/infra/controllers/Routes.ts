@@ -76,7 +76,7 @@ export default function setupRoutes() {
   router.get('/', async (req, res) => {
     const filePath = path.join(__dirname, '../../View', 'index.html');
     const htmlTemplate = await fs.readFile(filePath, 'utf8');
-    const message: string = 'PROD' ?? 'PROD';
+    const message: string = 'PROD';
 
     const renderedHtml = htmlTemplate.replace('{{message}}', message).replace('{{message}}', message);
 
