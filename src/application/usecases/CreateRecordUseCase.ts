@@ -52,10 +52,22 @@ export class CreateRecordUseCase {
     if (recordsSnapshot.exists()) {
       recordsSnapshot.forEach((recordSnapshot) => {
         const recordData = recordSnapshot.val();
-        allRecords.push(recordData);
+        allRecords.push({
+          uid: recordSnapshot.key,
+          recordData
+        }
+        );
       });
     }
     return allRecords;
+  }
+  async deleteRecord(recordId: string): Promise<void> {
+    try {
+      const path = `records/${recordId}`;
+      await this.firebaseAdapter.deleteValue(path);
+    } catch (error) {
+      throw new Error('Erro ao deletar registro.');
+    }
   }
 
   async updateRecord(userId: string, updatedRecord: any): Promise<void> {

@@ -9,6 +9,7 @@ export interface User {
 
 export interface ListUsersUseCase {
   execute(): Promise<User[]>;
+  deleteUser(userId: string): Promise<void>;
 }
 
 export class ListUsersInteractor implements ListUsersUseCase {
@@ -26,4 +27,14 @@ export class ListUsersInteractor implements ListUsersUseCase {
     const users = await this.execute();
     return users.some(user => user.uid === userId);
   }
+
+  async deleteUser(userId: string): Promise<void> {
+    try {
+      const path = `users/${userId}`;
+      await this.firebaseAdapter.deleteValue(path);
+    } catch (error) {
+      throw new Error('Erro ao deletar registro.');
+    }
+  }
+
 }

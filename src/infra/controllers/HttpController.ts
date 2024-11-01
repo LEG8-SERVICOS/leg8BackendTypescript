@@ -80,6 +80,38 @@ export class HttpController {
     }
   }
   
+  async deleteRecord(req: Request, res: Response): Promise<void> {
+    try {
+      const reqId = req.params.id 
+      await this.createRecordUseCase.deleteRecord(reqId)
+      res.status(200).json({message: 'Registro deletado!'})
+    } catch(error) {
+      console.error('Erro ao deletar registro:', error);
+      res.status(500).json({ error: 'Erro ao deletar registro.' });
+    }
+  }
+
+  async deleteUsers(req: Request, res: Response): Promise<void> {
+    try {
+      const reqId = req.params.id 
+      await this.listUsersUseCase.deleteUser(reqId)
+      res.status(200).json({message: 'Usuario deletado!'})
+    } catch(error) {
+      console.error('Erro ao deletar usuario:', error);
+      res.status(500).json({ error: 'Erro ao deletar Usuario.' });
+    }
+  }
+
+  async deleteAttestation(req: Request, res: Response): Promise<void> {
+    try {
+      const reqId = req.params.id 
+      await this.registerAttestationUseCase.deleteAttestation(reqId)
+      res.status(200).json({message: 'Atestado deletado!'})
+    } catch(error) {
+      console.error('Erro ao deletar atestado:', error);
+      res.status(500).json({ error: 'Erro ao deletar atestado.' });
+    }
+  }
 
   parseTime(timeString: string): number | null {
     const [hours, minutes] = timeString.split(':').map(Number);

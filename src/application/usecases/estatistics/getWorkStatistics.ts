@@ -13,8 +13,8 @@ interface WorkStatistics {
 }
 
 export default async function calcularEstatisticasDeTrabalho(): Promise<WorkStatistics> {
-    const responseUsers: AxiosResponse<any[]> = await axios.get("https://api.leg8.com.br/users");
-    const responseRecords: AxiosResponse<WorkRecord[]> = await axios.get("https://api.leg8.com.br/records");
+    const responseUsers: AxiosResponse<any[]> = await axios.get("https://leg8backendtypescript-t3md.onrender.com/users");
+    const responseRecords: AxiosResponse<WorkRecord[]> = await axios.get("https://leg8backendtypescript-t3md.onrender.com/records");
 
     const usuarios: any[] = responseUsers.data;
     const registros: WorkRecord[] = responseRecords.data;

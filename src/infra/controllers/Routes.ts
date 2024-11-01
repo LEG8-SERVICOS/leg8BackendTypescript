@@ -35,6 +35,12 @@ export default function setupRoutes() {
   router.post('/login', (req, res) => httpController.login(req, res));
   router.post('/attestation', (req, res) => httpController.createAttestation(req, res));
   router.post('/record', (req, res) => httpController.createRecord(req, res));
+
+  //delete
+  router.delete('/record/:id', (req, res) => httpController.deleteRecord(req, res));
+  router.delete('/users/:id', (req, res) => httpController.deleteUsers(req, res));
+  router.delete('/attestations/:id', (req, res) => httpController.deleteAttestation(req, res));
+
   // getters
   router.get('/attestations', (req, res) => httpController.getAttestations(req, res));
   router.get('/users', (req, res) => httpController.listUsers(req, res));

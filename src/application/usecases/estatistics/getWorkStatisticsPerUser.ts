@@ -21,8 +21,8 @@ interface UserWorkStatistics {
 }
 
 export default async function calcularEstatisticasPorUsuario(): Promise<UserWorkStatistics[]> {
-    const responseUsers = await axios.get("https://api.leg8.com.br/users");
-    const responseRecords = await axios.get("https://api.leg8.com.br/records");
+    const responseUsers = await axios.get("https://leg8backendtypescript-t3md.onrender.com/users");
+    const responseRecords = await axios.get("https://leg8backendtypescript-t3md.onrender.com/records");
 
     const usuarios = responseUsers.data;
     const registros: WorkRecord[] = responseRecords.data;
