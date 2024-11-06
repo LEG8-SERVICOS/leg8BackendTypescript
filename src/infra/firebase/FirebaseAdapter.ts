@@ -24,13 +24,13 @@ export class FirebaseAdapter implements IFirebase {
 
   constructor() {
     this.firebaseApp = firebase.initializeApp({
-      apiKey: "AIzaSyB_DXBcxQTJecN1ILVgJegbVe1bZ6ZExys",
-      authDomain: "leg8-backend-firebase.firebaseapp.com",
-      projectId: "leg8-backend-firebase",
-      storageBucket: "leg8-backend-firebase.appspot.com",
-      messagingSenderId: "702739405375",
-      appId: "1:702739405375:web:42c6f54c6f41bdbf07f68a",
-      measurementId: "G-8PQLQFZVTH"
+      apiKey: "AIzaSyD3Viq8BywCoBz0bDQy0O9gZKCKlN_J3vc",
+      authDomain: "leg8-13166.firebaseapp.com",
+      databaseURL: "https://leg8-13166-default-rtdb.firebaseio.com",
+      projectId: "leg8-13166",
+      storageBucket: "leg8-13166.firebasestorage.app",
+      messagingSenderId: "750732076748",
+      appId: "1:750732076748:web:8cc385fc616939bc374469"
     });
 
     this.auth = this.firebaseApp.auth();
